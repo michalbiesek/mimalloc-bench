@@ -20,6 +20,11 @@ run_hd=0
 run_sys=0
 run_rp=0
 run_sm=0
+run_mk_dram=0
+run_mk_pmem=0
+run_mk_pmemreuse=0
+run_mk_daxkmem=0
+run_mk_daxkmemreuse=0
 run_sn=0
 run_tbb=0
 run_mesh=0
@@ -95,6 +100,8 @@ lib_xsmi="$localdevdir/../../mimalloc/out/secure/libmimalloc-secure.so"
 lib_hd="$localdevdir/Hoard/src/libhoard.so"
 lib_sn="$localdevdir/snmalloc/release/libsnmallocshim.so"
 lib_sm="$localdevdir/SuperMalloc/release/lib/libsupermalloc.so"
+lib_mk="$localdevdir/memkind/utils/memkind_malloc_wrapper/.libs/libmemkind_malloc_wrapper.so"
+#lib_mk_dbg="$localdevdir/memkind/utils/memkind_malloc_wrapper/.libs/libmemkind_malloc_wrapper_dbg.so"
 #lib_sm="$localdevdir/SuperMalloc/release/lib/libsupermalloc_pthread.so"
 lib_je="${localdevdir}/jemalloc/lib/libjemalloc.so"
 lib_rp="`find ${localdevdir}/rpmalloc/bin/*/release -name librpmallocwrap.so`"
@@ -160,7 +167,7 @@ while : ; do
         run_xmalloc_test=1
         run_larson=1
         run_sh6bench=1
-        run_sh8bench=1
+        run_sh8bench=0
         run_cscratch=1
 	      run_redis=1
         run_mstress=1
@@ -176,6 +183,16 @@ while : ; do
         run_rp=1;;
     sm)
         run_sm=1;;
+    mk_dram)
+        run_mk_dram=1;;
+    mk_pmem)
+        run_mk_pmem=1;;
+    mk_pmemreuse)
+        run_mk_pmemreuse=1;;
+    mk_daxkmem)
+        run_mk_daxkmem=1;;
+    mk_daxkmemreuse)
+        run_mk_daxkmemreuse=1;;
     sn)
         run_sn=1;;
     sc)
@@ -282,6 +299,11 @@ while : ; do
         echo "  smi                          use secure version of mimalloc"
         echo "  mesh                         use mesh"
         echo "  nomesh                       use mesh w/ meshing disabled"
+        echo "  mk_dram                      use memkind - DRAM variant (MEMKIND_DEFAULT)"
+        echo "  mk_daxkmem                   use memkind - PMEM variant (MEMKIND_DAX_KMEM)"
+        echo "  mk_daxkmemreuse              use memkind - PMEM variant (MEMKIND_DAX_KMEM) without madvise"
+        echo "  mk_pmem                      use memkind - PMEM variant (FS-DAX) - mount path defined by PMEM_KIND_PATH"
+        echo "  mk_pmemreuse                 use memkind - PMEM variant (FS-DAX) without punch hole - mount path defined by PMEM_KIND_PATH"
         echo ""
         echo "  cfrac                        run cfrac"
         echo "  espresso                     run espresso"
@@ -494,6 +516,44 @@ function run_sm_test {
   fi
 }
 
+function run_mk_dram_test {
+  if test "$run_mk_dram" = "1"; then
+    run_testx $1 "mk_dram" "MEMKIND_DAX_KMEM_ON=0 ${ldpreload}=$lib_mk" "$2"
+  fi
+}
+
+function run_mk_daxkmem_test {
+  if test "$run_mk_daxkmem" = "1"; then
+    run_testx $1 "mk_daxkmem" "MEMKIND_DAX_KMEM_ON=1 ${ldpreload}=$lib_mk" "$2"
+  fi
+}
+
+function run_mk_daxkmemreuse_test {
+  if test "$run_mk_daxkmemreuse" = "1"; then
+    run_testx $1 "mk_daxkmemreuse" "MEMKIND_HOG_MEMORY=1 MEMKIND_DAX_KMEM_ON=1 ${ldpreload}=$lib_mk" "$2"
+  fi
+}
+
+function run_mk_pmem_test {
+  if test "$run_mk_pmem" = "1"; then
+    if [[ -z "${PMEM_KIND_PATH}" ]]; then
+        echo "PMEM_KIND_PATH environmental variable must be defined"
+        exit 1
+    fi
+    run_testx $1 "mk_pmem" "${ldpreload}=$lib_mk" "$2"
+  fi
+}
+
+function run_mk_pmemreuse_test {
+  if test "$run_mk_pmemreuse" = "1"; then
+    if [[ -z "${PMEM_KIND_PATH}" ]]; then
+        echo "PMEM_KIND_PATH environmental variable must be defined"
+        exit 1
+    fi
+    run_testx $1 "mk_pmemreuse" "MEMKIND_HOG_MEMORY=1 ${ldpreload}=$lib_mk" "$2"
+  fi
+}
+
 function run_sn_test {
   if test "$run_sn" = "1"; then
     run_testx $1 "sn" "${ldpreload}=$lib_sn" "$2"
@@ -539,6 +599,11 @@ function run_test {
   run_je_test $1 "$2"
   run_tbb_test $1 "$2"
   run_sm_test $1 "$2"
+  run_mk_dram_test $1 "$2"
+  run_mk_daxkmem_test $1 "$2"
+  run_mk_pmem_test $1 "$2"
+  run_mk_pmemreuse_test $1 "$2"
+  run_mk_daxkmemreuse_test $1 "$2"
   run_sc_test $1 "$2"
   run_sn_test $1 "$2"
   run_rp_test $1 "$2"

@@ -19,6 +19,7 @@ version_tbb=2020
 version_mesh=67ff31acae
 version_nomesh=67ff31acae
 version_sc=master
+version_mk=master
 
 # allocators
 setup_je=0
@@ -32,12 +33,13 @@ setup_tbb=0
 setup_mesh=0
 setup_nomesh=0
 setup_sc=0
+setup_mk=0
 
 # bigger benchmarks
 setup_lean=0
 setup_redis=0
 setup_ch=0
-setup_bench=0
+setup_bench=1
 
 # various
 setup_packages=0
@@ -65,6 +67,7 @@ while : ; do
         setup_rp=$flag_arg
         setup_hd=$flag_arg
         setup_sm=$flag_arg
+        setup_mk=$flag_arg
         setup_tbb=$flag_arg
         setup_mesh=$flag_arg
 	# only run Mesh's 'nomesh' configuration if asked
@@ -84,6 +87,8 @@ while : ; do
         setup_rp=$flag_arg;;
     sm)
         setup_sm=$flag_arg;;
+    mk)
+        setup_mk=$flag_arg;;
     sn)
         setup_sn=$flag_arg;;
     sc)
@@ -134,6 +139,7 @@ while : ; do
         echo "  sn                           setup snmalloc ($version_sn)"
         echo "  rp                           setup rpmalloc ($version_rp)"
         echo "  sc                           setup scalloc ($version_sc)"
+        echo "  mk                           setup memkind ($version_mk)"
         echo ""
         echo "  lean                         setup lean 3 benchmark"
         echo "  redis                        setup redis benchmark"
@@ -305,6 +311,14 @@ if test "$setup_sm" = "1"; then
   popd
 fi
 
+if test "$setup_mk" = "1"; then
+  checkout mk $version_mk memkind https://github.com/memkind/memkind.git
+  ./autogen.sh
+  ./configure
+  make
+  popd
+fi
+
 if test "$setup_mesh" = "1"; then
   checkout mesh $version_mesh mesh https://github.com/plasma-umass/mesh
   ./configure
@@ -444,18 +458,18 @@ if test "$setup_bench" = "1"; then
   popd
 fi
 
-if test "$setup_bench" = "1"; then
-  phase "get Intel PDF manual"
+# if test "$setup_bench" = "1"; then
+#   phase "get Intel PDF manual"
 
-  pdfdoc="325462-sdm-vol-1-2abcd-3abcd.pdf"
-  pushd "$devdir"
-  if test -f "$pdfdoc"; then
-    echo "do nothing: $devdir/$pdfdoc already exists"
-  else
-    wget https://software.intel.com/sites/default/files/managed/39/c5/325462-sdm-vol-1-2abcd-3abcd.pdf
-  fi
-  popd
-fi
+#   pdfdoc="325462-sdm-vol-1-2abcd-3abcd.pdf"
+#   pushd "$devdir"
+#   if test -f "$pdfdoc"; then
+#     echo "do nothing: $devdir/$pdfdoc already exists"
+#   else
+#     wget https://software.intel.com/sites/default/files/managed/39/c5/325462-sdm-vol-1-2abcd-3abcd.pdf
+#   fi
+#   popd
+# fi
 
 if test "$setup_bench" = "1"; then
   phase "build benchmarks"

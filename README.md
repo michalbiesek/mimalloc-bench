@@ -97,6 +97,8 @@ Supported allocators are:
 - **tbb**: The Intel [TBB](https://github.com/intel/tbb) allocator that comes with
   the Thread Building Blocks (TBB) library \[7].
   Installed as package `libtbb-dev`, version `2017~U7-8`.
+- **mk**: The [_memkind_](https://github.com/memkind/memkind) heap manager built
+   on top of jemalloc which enables control of memory characteristics and a partitioning of the heap between kinds of memory. Using version 1.11-dev(commit 939c0c2).
 
 
 ## Current Benchmarks
